@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+
+// Use the PORT environment variable if it's set, otherwise default to 3000
+const port = process.env.PORT || 3000;
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -24,6 +26,7 @@ app.post('/calculate', (req, res) => {
     res.json({ time: time });
 });
 
+// Start the server on the correct port
 app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`);
+    console.log(`Server listening on port ${port}`);
 });
