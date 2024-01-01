@@ -1,20 +1,36 @@
-# Use the official Node.js 16 image as a parent image
-FROM node:16
+# syntax=docker/dockerfile:1
 
-# Set the working directory inside the container
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Dockerfile reference guide at
+# https://docs.docker.com/go/dockerfile-reference/
+
+ARG NODE_VERSION=21.5.0
+
+FROM node:${NODE_VERSION}-alpine
+
+# Use production node environment by default.
+ENV NODE_ENV production
+
+
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json (if available) into the container
-COPY package*.json ./
+# Download dependencies as a separate step to take advantage of Docker's caching.
+# Leverage a cache mount to /root/.npm to speed up subsequent builds.
+# Leverage a bind mounts to package.json and package-lock.json to avoid having to copy them into
+# into this layer.
+RUN --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev
 
-# Install any dependencies
-RUN npm install
+# Run the application as a non-root user.
+USER node
 
-# Copy the rest of your application's source code from your host to your container's working directory
+# Copy the rest of the source files into the image.
 COPY . .
 
-# Your app binds to port 3000 so you'll use the EXPOSE instruction to have it mapped by the docker daemon
+# Expose the port that the application listens on.
 EXPOSE 3000
 
-# Define the command to run your app using CMD which defines your runtime
-CMD [ "node", "server.js" ]
+# Run the application.
+CMD node server.js
